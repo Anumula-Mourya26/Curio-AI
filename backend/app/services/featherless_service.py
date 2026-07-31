@@ -25,24 +25,36 @@ class FeatherlessService:
     def _extract_json(self, text: str):
         """
         Extract JSON even if the model wraps it inside markdown
-        or adds extra text.
+        or writes extra text.
         """
 
         text = text.strip()
 
+        # Try direct JSON first
+        try:
+            return json.loads(text)
+        except Exception:
+            pass
+
         # Remove ```json ... ```
-        text = re.sub(r"^```json", "", text, flags=re.IGNORECASE).strip()
-        text = re.sub(r"^```", "", text).strip()
-        text = re.sub(r"```$", "", text).strip()
+        text = re.sub(r"```json", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"```", "", text).strip()
 
-        # Find first { ... last }
-        start = text.find("{")
-        end = text.rfind("}")
+        try:
+            return json.loads(text)
+        except Exception:
+            pass
 
-        if start != -1 and end != -1:
-            text = text[start:end + 1]
+        # Extract first JSON object
+        match = re.search(r"\{.*\}", text, re.DOTALL)
 
-        return json.loads(text)
+        if match:
+            try:
+                return json.loads(match.group())
+            except Exception:
+                pass
+
+        return None
 
     def generate_review(self, idea: str, focus: str | None = None):
 
@@ -65,32 +77,21 @@ Schema:
   "recommended_next_step": ""
 }}
 
-Rules:
-
-- JSON ONLY
-- No markdown
-- No explanation
-- curiosity_score must be integer 0-100
-
 Idea:
-
 {idea}
 
 Focus:
-
 {focus if focus else "None"}
 """
 
         response = self.client.chat.completions.create(
             model=settings.FEATHERLESS_MODEL,
-            temperature=0.5,
-            max_tokens=900,
             messages=[
                 {
                     "role": "system",
                     "content": (
-                        "Return ONLY valid JSON. "
-                        "Never wrap JSON inside markdown."
+                        "You are a rigorous startup critic. "
+                        "Always return ONLY JSON."
                     ),
                 },
                 {
@@ -98,30 +99,27 @@ Focus:
                     "content": prompt,
                 },
             ],
+            temperature=0.7,
+            max_tokens=900,
         )
 
         content = response.choices[0].message.content.strip()
 
-        try:
-            payload = self._extract_json(content)
+        # ==========================
+        # DEBUG OUTPUT
+        # ==========================
+        print("\n")
+        print("=" * 60)
+        print("RAW FEATHERLESS RESPONSE")
+        print("=" * 60)
+        print(content)
+        print("=" * 60)
+        print("\n")
 
-            return {
-                "assumptions": payload.get("assumptions", []),
-                "blind_spots": payload.get("blind_spots", []),
-                "risks": payload.get("risks", []),
-                "questions": payload.get("questions", []),
-                "missing_knowledge": payload.get("missing_knowledge", []),
-                "curiosity_score": int(payload.get("curiosity_score", 0)),
-                "recommended_next_step": payload.get(
-                    "recommended_next_step",
-                    "Continue investigating this idea."
-                ),
-            }
+        payload = self._extract_json(content)
 
-        except Exception as e:
-            print("Featherless parse error:")
-            print(e)
-            print(content)
+        if payload is None:
+            print("FAILED TO PARSE JSON")
 
             return {
                 "assumptions": [],
@@ -130,5 +128,20 @@ Focus:
                 "questions": [],
                 "missing_knowledge": [],
                 "curiosity_score": 0,
-                "recommended_next_step": "Unable to parse Featherless response.",
+                "recommended_next_step": content,
             }
+
+        print("JSON PARSED SUCCESSFULLY")
+
+        return {
+            "assumptions": payload.get("assumptions", []),
+            "blind_spots": payload.get("blind_spots", []),
+            "risks": payload.get("risks", []),
+            "questions": payload.get("questions", []),
+            "missing_knowledge": payload.get("missing_knowledge", []),
+            "curiosity_score": payload.get("curiosity_score", 0),
+            "recommended_next_step": payload.get(
+                "recommended_next_step",
+                ""
+            ),
+        }
