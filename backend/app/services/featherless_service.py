@@ -23,20 +23,15 @@ class FeatherlessService:
         )
 
     def _extract_json(self, text: str):
-        """
-        Extract JSON even if the model wraps it inside markdown
-        or writes extra text.
-        """
+        """Extract JSON even if wrapped in markdown."""
 
         text = text.strip()
 
-        # Try direct JSON first
         try:
             return json.loads(text)
         except Exception:
             pass
 
-        # Remove ```json ... ```
         text = re.sub(r"```json", "", text, flags=re.IGNORECASE)
         text = re.sub(r"```", "", text).strip()
 
@@ -45,7 +40,6 @@ class FeatherlessService:
         except Exception:
             pass
 
-        # Extract first JSON object
         match = re.search(r"\{.*\}", text, re.DOTALL)
 
         if match:
@@ -61,27 +55,88 @@ class FeatherlessService:
         prompt = f"""
 You are Curio.
 
-Challenge the following idea.
+Curio is NOT an assistant.
+Curio is an intelligent second-opinion engine that challenges business ideas,
+startup concepts, research proposals and strategic decisions.
 
-Return ONLY valid JSON.
+Your objective is NOT to validate ideas.
+Your objective is to expose hidden weaknesses before they become expensive mistakes.
+
+Think like:
+
+• Startup Investor
+• Product Manager
+• Competitor
+• Customer
+• Engineer
+• Risk Analyst
+
+Challenge the idea from multiple perspectives.
+
+Do NOT give generic answers.
+
+Every point must be specific to THIS idea.
+
+For each section generate 3-6 concise bullet points.
+
+Curiosity Score Rules:
+
+90-100 = Outstanding idea with excellent evidence and few assumptions
+
+75-89 = Strong idea with manageable weaknesses
+
+60-74 = Good idea but needs more validation
+
+40-59 = Average idea with several important assumptions
+
+20-39 = Weak idea with major risks
+
+0-19 = Fundamentally flawed or unrealistic
+
+IMPORTANT
+
+Do NOT always give low scores.
+
+Most realistic startup ideas should score between 60 and 80.
+
+Only give below 40 if the proposal is genuinely weak.
+
+Return ONLY JSON.
 
 Schema:
 
 {{
-  "assumptions": [],
-  "blind_spots": [],
-  "risks": [],
-  "questions": [],
-  "missing_knowledge": [],
-  "curiosity_score": 0,
-  "recommended_next_step": ""
+  "assumptions":[
+    "...",
+    "..."
+  ],
+  "blind_spots":[
+    "...",
+    "..."
+  ],
+  "risks":[
+    "...",
+    "..."
+  ],
+  "questions":[
+    "...",
+    "..."
+  ],
+  "missing_knowledge":[
+    "...",
+    "..."
+  ],
+  "curiosity_score":75,
+  "recommended_next_step":"..."
 }}
 
 Idea:
+
 {idea}
 
 Focus:
-{focus if focus else "None"}
+
+{focus if focus else "General critique"}
 """
 
         response = self.client.chat.completions.create(
@@ -89,32 +144,39 @@ Focus:
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        "You are a rigorous startup critic. "
-                        "Always return ONLY JSON."
-                    ),
+                    "content": """
+You are Curio.
+
+You challenge ideas instead of validating them.
+
+Never praise ideas.
+
+Always identify hidden assumptions, weak evidence, execution risks,
+competitive threats and unanswered questions.
+
+Return ONLY valid JSON.
+
+Never wrap JSON inside markdown.
+
+Never explain the JSON.
+""",
                 },
                 {
                     "role": "user",
                     "content": prompt,
                 },
             ],
-            temperature=0.7,
-            max_tokens=900,
+            temperature=0.6,
+            max_tokens=1100,
         )
 
         content = response.choices[0].message.content.strip()
 
-        # ==========================
-        # DEBUG OUTPUT
-        # ==========================
-        print("\n")
-        print("=" * 60)
+        print("=" * 70)
         print("RAW FEATHERLESS RESPONSE")
-        print("=" * 60)
+        print("=" * 70)
         print(content)
-        print("=" * 60)
-        print("\n")
+        print("=" * 70)
 
         payload = self._extract_json(content)
 
@@ -139,9 +201,9 @@ Focus:
             "risks": payload.get("risks", []),
             "questions": payload.get("questions", []),
             "missing_knowledge": payload.get("missing_knowledge", []),
-            "curiosity_score": payload.get("curiosity_score", 0),
+            "curiosity_score": payload.get("curiosity_score", 70),
             "recommended_next_step": payload.get(
                 "recommended_next_step",
-                ""
+                "Validate the biggest assumptions before moving forward."
             ),
         }
