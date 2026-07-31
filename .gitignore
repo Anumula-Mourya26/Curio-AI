@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+backend/venv/
+
+# Environment
+.env
+backend/.env
+
+# Uploads
+backend/uploads/
+
+# Build
+frontend/dist/
+__pycache__/
+*.py[cod]
+
+# IDE
+.vscode/
+.idea/
