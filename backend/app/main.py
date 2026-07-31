@@ -2,8 +2,7 @@
 FastAPI Application Entry Point.
 
 Creates the FastAPI app, registers middleware (CORS), mounts API routers,
-and exposes health-check endpoints. This is the single entry point for
-the backend server (started via: uvicorn app.main:app).
+and exposes health-check endpoints.
 """
 
 from fastapi import FastAPI
@@ -19,19 +18,28 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origins=[
+        "http://localhost:5173",
+        "https://curio-ai-eight.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# API Routes
 app.include_router(upload_router, prefix="/api")
 app.include_router(investigation_router, prefix=settings.API_PREFIX)
 
 
 @app.get("/health")
-async def health_check() -> dict:
-    """Liveness probe for deployment and local dev."""
-    return {"status": "ok", "service": settings.APP_NAME}
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "ok",
+        "service": settings.APP_NAME,
+    }
