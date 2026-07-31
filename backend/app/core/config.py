@@ -13,7 +13,11 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     API_PREFIX: str = "/api/v1"
 
-    CORS_ORIGINS: list[str] = ["http://localhost:5173"]
+    # Allow local development + deployed frontend
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "https://curio-ai-eight.vercel.app",
+    ]
 
     MAX_UPLOAD_SIZE_MB: int = 50
     UPLOAD_DIR: str = "./uploads"
