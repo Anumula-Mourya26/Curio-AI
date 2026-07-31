@@ -4,7 +4,10 @@
  * Sends an idea to Curio for critique and follow-up analysis.
  */
 
-const INVESTIGATION_URL = '/api/v1/investigate'
+const API_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+const INVESTIGATION_URL = `${API_URL}/api/v1/investigate`
 
 export interface IdeaReviewRequest {
   idea: string
@@ -18,7 +21,10 @@ export async function investigate(idea: string, focus?: string) {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ idea, focus } as IdeaReviewRequest),
+    body: JSON.stringify({
+      idea,
+      focus,
+    } as IdeaReviewRequest),
   })
 
   if (!response.ok) {
