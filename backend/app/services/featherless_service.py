@@ -6,6 +6,7 @@ blind spots, risks, and questions the user did not consider.
 """
 
 import json
+import re
 
 from openai import OpenAI
 
@@ -21,50 +22,75 @@ class FeatherlessService:
             base_url=settings.FEATHERLESS_BASE_URL,
         )
 
+    def _extract_json(self, text: str):
+        """
+        Extract JSON even if the model wraps it inside markdown
+        or adds extra text.
+        """
+
+        text = text.strip()
+
+        # Remove ```json ... ```
+        text = re.sub(r"^```json", "", text, flags=re.IGNORECASE).strip()
+        text = re.sub(r"^```", "", text).strip()
+        text = re.sub(r"```$", "", text).strip()
+
+        # Find first { ... last }
+        start = text.find("{")
+        end = text.rfind("}")
+
+        if start != -1 and end != -1:
+            text = text[start:end + 1]
+
+        return json.loads(text)
+
     def generate_review(self, idea: str, focus: str | None = None):
+
         prompt = f"""
-You are Curio, an AI that challenges ideas instead of answering them.
+You are Curio.
 
-Investigate the idea below and produce a critique that exposes hidden assumptions,
-blind spots, weaknesses, missing evidence, difficult questions, and the next investigation.
+Challenge the following idea.
 
-Do not summarize the idea. Do not be polite. Challenge it.
+Return ONLY valid JSON.
 
-Return ONLY valid JSON with this exact schema:
+Schema:
 
 {{
-    "assumptions": ["Assumption 1", "Assumption 2"],
-    "blind_spots": ["Blind spot 1", "Blind spot 2"],
-    "risks": ["Risk 1", "Risk 2"],
-    "questions": ["Question 1", "Question 2"],
-    "missing_knowledge": ["Missing knowledge 1", "Missing knowledge 2"],
-    "curiosity_score": 0,
-    "recommended_next_step": "A concrete next investigation"
+  "assumptions": [],
+  "blind_spots": [],
+  "risks": [],
+  "questions": [],
+  "missing_knowledge": [],
+  "curiosity_score": 0,
+  "recommended_next_step": ""
 }}
 
 Rules:
-- Return ONLY JSON.
-- Do NOT use markdown.
-- Do NOT wrap in ```json.
-- Do NOT explain anything.
-- curiosity_score must be an integer between 0 and 100.
-- Focus on the idea itself, not on generic advice.
+
+- JSON ONLY
+- No markdown
+- No explanation
+- curiosity_score must be integer 0-100
 
 Idea:
+
 {idea}
 
 Focus:
-{focus if focus else 'None'}
+
+{focus if focus else "None"}
 """
 
         response = self.client.chat.completions.create(
             model=settings.FEATHERLESS_MODEL,
+            temperature=0.5,
+            max_tokens=900,
             messages=[
                 {
                     "role": "system",
                     "content": (
-                        "You are Curio, a rigorous critique engine. "
-                        "Always return valid JSON and challenge the idea directly."
+                        "Return ONLY valid JSON. "
+                        "Never wrap JSON inside markdown."
                     ),
                 },
                 {
@@ -72,24 +98,31 @@ Focus:
                     "content": prompt,
                 },
             ],
-            temperature=0.7,
-            max_tokens=900,
         )
 
         content = response.choices[0].message.content.strip()
 
         try:
-            payload = json.loads(content)
+            payload = self._extract_json(content)
+
             return {
                 "assumptions": payload.get("assumptions", []),
                 "blind_spots": payload.get("blind_spots", []),
                 "risks": payload.get("risks", []),
                 "questions": payload.get("questions", []),
                 "missing_knowledge": payload.get("missing_knowledge", []),
-                "curiosity_score": payload.get("curiosity_score", 0),
-                "recommended_next_step": payload.get("recommended_next_step", "Continue investigating the idea"),
+                "curiosity_score": int(payload.get("curiosity_score", 0)),
+                "recommended_next_step": payload.get(
+                    "recommended_next_step",
+                    "Continue investigating this idea."
+                ),
             }
-        except Exception:
+
+        except Exception as e:
+            print("Featherless parse error:")
+            print(e)
+            print(content)
+
             return {
                 "assumptions": [],
                 "blind_spots": [],
@@ -97,5 +130,5 @@ Focus:
                 "questions": [],
                 "missing_knowledge": [],
                 "curiosity_score": 0,
-                "recommended_next_step": content,
+                "recommended_next_step": "Unable to parse Featherless response.",
             }
