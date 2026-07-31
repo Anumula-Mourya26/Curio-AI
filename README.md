@@ -1,82 +1,286 @@
-# Artificial Curiosity as a Service (ACaaS)
+# 🧠 Curio — AI That Questions Your Ideas
 
-An autonomous investigation system that proactively discovers insights from structured datasets.
+> *The second opinion your idea didn't know it needed.*
 
-**This is NOT a chatbot.** ACaaS observes data, generates hypotheses, asks targeted questions, and produces investigation reports.
+---
 
-## Architecture Overview
+# 🚀 The Core Idea
+
+Curio is an AI-powered web application that **questions ideas instead of answering them**.
+
+Unlike traditional AI assistants that generate confident responses, Curio performs a structured critique of any idea, claim, business plan, hypothesis, or strategy. It uncovers hidden assumptions, blind spots, risks, unanswered questions, and missing knowledge, helping users think more critically before making decisions.
+
+Curio is intentionally **not a chatbot**. Instead of validating your thinking, it challenges it.
+
+---
+
+# ❓ Problem Statement
+
+Modern AI tools are exceptional at generating answers, but they rarely question the reasoning behind the user's idea.
+
+People increasingly depend on AI for:
+
+- Startup ideas
+- Business strategies
+- Research proposals
+- Product planning
+- Academic work
+- Personal decision making
+
+While these tools provide confident responses, they often reinforce incomplete thinking instead of exposing weaknesses.
+
+This leads to decisions that feel validated by AI without ever being critically examined.
+
+Users often fail to recognize:
+
+- Hidden assumptions
+- Missing evidence
+- Execution risks
+- Alternative viewpoints
+- Important unanswered questions
+
+---
+
+# 💡 Our Solution
+
+Curio flips the traditional AI interaction model.
+
+Instead of answering your idea, Curio investigates it.
+
+Users submit an idea, claim, research proposal, business concept, or strategic plan.
+
+Curio then performs a structured investigation by identifying:
+
+- Hidden Assumptions
+- Blind Spots
+- Risks
+- Missing Knowledge
+- Critical Questions
+
+Finally, Curio generates a **Curiosity Score**, representing how thoroughly the idea has been examined.
+
+Users can also perform **deeper investigations** into any individual finding for more focused analysis.
+
+Curio isn't another AI chatbot.
+
+It's a structured second-opinion engine built to improve thinking before decisions are made.
+
+---
+
+# ✨ Features
+
+- 🧠 Hidden Assumption Detection
+- 👀 Blind Spot Identification
+- ⚠️ Risk Analysis
+- 📚 Missing Knowledge Discovery
+- ❓ Critical Follow-up Questions
+- 📈 Curiosity Score Generation
+- 🔍 Deep Investigation Mode
+- 🚫 Non-chatbot structured reasoning
+
+---
+
+# ⚙️ How Curio Works
+
+1. User enters an idea, claim, hypothesis, or business plan.
+2. Curio analyzes the reasoning behind it.
+3. AI identifies:
+   - Hidden assumptions
+   - Blind spots
+   - Risks
+   - Missing knowledge
+   - Critical questions
+4. A Curiosity Score is generated.
+5. Users can investigate any finding in greater detail.
+6. Curio provides a structured report that helps users refine their thinking.
+
+---
+
+# 🎯 Example Use Cases
+
+Curio can be used for:
+
+- Startup idea validation
+- Business planning
+- Product strategy
+- Research hypothesis evaluation
+- Academic brainstorming
+- Investment analysis
+- Critical thinking exercises
+- Personal decision making
+- Innovation workshops
+
+---
+
+# 🛠 Tech Stack
+
+## Frontend
+
+- React
+- Vite
+- Tailwind CSS
+
+## Backend
+
+- FastAPI
+- Python
+
+## AI
+
+- Featherless AI (OpenAI-Compatible API)
+
+## Deployment
+
+- Vercel
+- Render
+
+---
+
+# 📂 Project Structure
 
 ```
-User (Browser)
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Frontend (React + Vite + Tailwind + Recharts)              │
-│  Upload CSV → Display questions → Show investigation report │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ HTTP / REST
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Backend (FastAPI)                                          │
-│  Orchestrates the investigation pipeline:                   │
-│                                                             │
-│  Observer → Curiosity Engine → Hypothesis Generator         │
-│       → Information Seeker → (user answer)                  │
-│       → Reasoning Engine → Discovery Engine                 │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Project Structure
-
-```
-acaas/
-├── backend/          # Python FastAPI service
+Curio/
+│
+├── backend/
 │   ├── app/
-│   │   ├── api/      # HTTP route handlers
-│   │   ├── core/     # Config, pipeline orchestration
-│   │   ├── models/   # Pydantic schemas
-│   │   ├── modules/  # Pluggable investigation engines
-│   │   └── services/ # File I/O, session state
+│   │   ├── api/
+│   │   ├── core/
+│   │   ├── models/
+│   │   ├── services/
+│   │   └── main.py
 │   └── requirements.txt
-├── frontend/         # React + Vite SPA
-│   └── src/
-│       ├── api/      # Backend client
-│       ├── components/
-│       ├── hooks/
-│       ├── pages/
-│       └── types/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── hooks/
+│   │   └── assets/
+│   └── package.json
+│
 └── README.md
 ```
 
-## Quick Start
+---
 
-### Backend
+# 🚀 Getting Started
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+```
+
+---
+
+## Backend Setup
 
 ```bash
 cd backend
+
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+
+# Windows
+venv\Scripts\activate
+
+# macOS/Linux
+source venv/bin/activate
+
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+
+uvicorn app.main:app --reload
 ```
 
-### Frontend
+Backend runs at:
+
+```
+http://localhost:8000
+```
+
+---
+
+## Frontend Setup
 
 ```bash
 cd frontend
+
 npm install
+
 npm run dev
 ```
 
-## Investigation Pipeline
+Frontend runs at:
 
-1. **Upload** — User uploads a CSV dataset.
-2. **Observer** — Analyzes schema, statistics, and distributions.
-3. **Curiosity Engine** — Identifies anomalies, uncertainty, contradictions, patterns.
-4. **Hypothesis Generator** — Creates multiple explanations per observation (LLM).
-5. **Information Seeker** — Selects the single most useful question for the user.
-6. **User Answer** — User responds to reduce uncertainty.
-7. **Reasoning Engine** — Updates confidence scores for each hypothesis.
-8. **Discovery Engine** — Generates the final investigation report.
+```
+http://localhost:5173
+```
 
-Each module in `backend/app/modules/` is designed to be independently replaceable.
+---
+
+# 🌍 Why Curio?
+
+Traditional AI focuses on providing answers.
+
+Curio focuses on improving the quality of the thinking behind the question.
+
+Rather than replacing human reasoning, Curio strengthens it by exposing what has not yet been considered.
+
+Instead of asking:
+
+> "What's the answer?"
+
+Curio asks:
+
+> "What haven't you thought about yet?"
+
+---
+
+# 🔮 Future Scope
+
+- Multi-round investigations
+- Team collaboration
+- Investigation history
+- Exportable PDF reports
+- Industry-specific critique modes
+- Comparative analysis between multiple ideas
+- Personalized reasoning profiles
+- AI-powered research recommendations
+
+---
+
+# 📸 Demo
+
+## 🌐 Live Application
+
+**Frontend**
+
+https://curio-ai-git-main-mourya1.vercel.app
+
+**Backend API**
+
+https://curio-ai-z6cy.onrender.com
+
+**API Documentation (Swagger)**
+
+https://curio-ai-z6cy.onrender.com/docs
+
+**GitHub Repository**
+
+https://github.com/Anumula-Mourya26/Curio-AI
+
+---
+    
+# 👥 Team
+
+Developed as a hackathon project exploring **Artificial Curiosity as a Service (ACaaS)** — a new approach to AI that promotes deeper thinking instead of simply generating answers.
+
+Our vision is to build AI that challenges ideas before they become decisions.
+
+---
+
+# 📜 License
+
+This project is developed for educational and hackathon purposes.
+
+Feel free to explore, learn from, and build upon the ideas presented here.
